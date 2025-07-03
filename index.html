@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Escala de Presença</title>
+  <style>
+    body { font-family: Arial; padding: 20px; }
+    table { border-collapse: collapse; width: 100%; margin-bottom: 20px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    .calendar-cell { height: 100px; vertical-align: top; }
+    input[type="number"] { width: 60px; }
+    .dias-presenciais span { display: inline-block; width: 60px; }
+    .buttons button { margin-right: 10px; }
+    .success-message { color: green; font-weight: bold; }
+  </style>
+</head>
+<body>
+
+<h1>Escala de Presença</h1>
+
+<label for="ano">Ano:</label>
+<input type="number" id="ano" value="2025" min="2020" max="2100">
+<label for="mes">Mês:</label>
+<select id="mes">
+  <option value="0">Janeiro</option>
+  <option value="1">Fevereiro</option>
+  <option value="2">Março</option>
+  <option value="3">Abril</option>
+  <option value="4">Maio</option>
+  <option value="5" selected>Junho</option>
+  <option value="6">Julho</option>
+  <option value="7">Agosto</option>
+  <option value="8">Setembro</option>
+  <option value="9">Outubro</option>
+  <option value="10">Novembro</option>
+  <option value="11">Dezembro</option>
+</select>
+
+<h2>Calendário</h2>
+<table id="calendario">
+  <thead><tr><th>Dom</th><th>Seg</th><th>Ter</th><th>Qua</th><th>Qui</th><th>Sex</th><th>Sáb</th></tr></thead>
+  <tbody></tbody>
+</table>
+
+<h2>Resumo por Área</h2>
+<table id="resumo">
+  <thead>
+    <tr>
+      <th>Área</th>
+      <th>Operação</th>
+      <th>X Semana</th>
+      <th>Cianorte</th>
+      <th>Maringá</th>
+      <th>Home</th>
+      <th>Full</th>
+      <th>Dias Presenciais</th>
+      <th>Pessoas</th>
+    </tr>
+  </thead>
+  <tbody id="resumo-body"></tbody>
+</table>
+
+<div class="buttons">
+  <button id="adicionar-linha">➕ Adicionar Linha</button>
+  <button id="salvar-dados">💾 Salvar Registros</button>
+  <span id="mensagem-sucesso" style="color: green;"></span>
+</div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js "></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js "></script>
+
+<script>
+  // 🔑 Suas credenciais do Firebase (pegue no Console)
+  const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "your-project.firebaseapp.com",
+    databaseURL: "https://your-project.firebaseio.com ",
+    projectId: "your-project",
+    storageBucket: "your-project.appspot.com",
+    messagingSenderId: "1234567890",
+    appId: "1:1234567890:web:abcdef123456"
+  };
+
+  // Inicializa o Firebase
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  const DIAS_SEMANA = ["dom", "seg", "ter", "qua", "qui", "sex", "sab"];
+
+  function gerarCalendario(ano, mes) {
+    const tbody = document.querySelector("#calendario tbody");
+    tbody.innerHTML = "";
+    const data = new Date(ano, mes, 1);
+    const primeiroDia = data.getDay();
+    const diasNoMes = new Date(ano, mes + 1, 0).getDate();
+    let dia = 1;
+    for (let i = 0; i < 6; i++) {
+      const tr = document.createElement("tr");
+      for (let j = 0; j < 7; j++) {
+        const td = document.createElement("td");
+        td.classList.add("calendar-cell");
+        if ((i === 0 && j < primeiroDia) || dia > diasNoMes) {
+          td.innerHTML = "";
+        } else {
+          const diaSemana = DIAS_SEMANA[j];
+          td.innerHTML = `<strong>${dia}</strong><br>Ocupação: <span class="ocupacao" data-dia="${diaSemana}">0</span><br>Fretado: <span class="fretado" data-dia="${diaSemana}">0</span>`;
+          dia++;
+        }
+        tr.appendChild(td);
+      }
+      tbody.appendChild(tr);
+    }
+    atualizarTotais();
+  }
+
+  function atualizarTotais() {
+    const dias = document.querySelectorAll(".calendar-cell");
+    dias.forEach(cell => {
+      const ocupacaoSpan = cell.querySelector(".ocupacao");
+      const fretadoSpan = cell.querySelector(".fretado");
+      if (!ocupacaoSpan || !fretadoSpan) return;
+
+      const diaDaSemana = ocupacaoSpan.dataset.dia;
+
+      let totalOcupacao = 0;
+      let totalFretado = 0;
+
+      document.querySelectorAll("#resumo-body tr").forEach(linha => {
+        const cianorte = parseInt(linha.querySelector(".cianorte")?.value || 0);
+        const maringa = parseInt(linha.querySelector(".maringa")?.value || 0);
+        const checkDia = linha.querySelector(`.dia-${diaDaSemana}`);
+
+        if (checkDia?.checked) {
+          totalOcupacao += cianorte + maringa;
+          totalFretado += cianorte;
+        }
+      });
+
+      ocupacaoSpan.textContent = totalOcupacao || '';
+      fretadoSpan.textContent = totalFretado || '';
+  }
+
+  function adicionarLinha(area = "", operacao = "", x_semana = 0, cianorte = 0, maringa = 0, home = 0, full = 0, pessoas = 0, dias_presenciais = {}) {
+    const tbody = document.getElementById("resumo-body");
+    const novaLinha = document.createElement("tr");
+    novaLinha.innerHTML = `
+      <td><input type="text" value="${area}"></td>
+      <td><input type="text" value="${operacao}"></td>
+      <td><input type="number" value="${x_semana}"></td>
+      <td><input type="number" class="cianorte" value="${cianorte}"></td>
+      <td><input type="number" class="maringa" value="${maringa}"></td>
+      <td><input type="number" value="${home}"></td>
+      <td><input type="number" value="${full}"></td>
+      <td class="dias-presenciais">
+        <span><input type="checkbox" class="dia-dom" ${dias_presenciais.dom ? 'checked' : ''}> Dom</span>
+        <span><input type="checkbox" class="dia-seg" ${dias_presenciais.seg ? 'checked' : ''}> Seg</span>
+        <span><input type="checkbox" class="dia-ter" ${dias_presenciais.ter ? 'checked' : ''}> Ter</span>
+        <span><input type="checkbox" class="dia-qua" ${dias_presenciais.qua ? 'checked' : ''}> Qua</span>
+        <span><input type="checkbox" class="dia-qui" ${dias_presenciais.qui ? 'checked' : ''}> Qui</span>
+        <span><input type="checkbox" class="dia-sex" ${dias_presenciais.sex ? 'checked' : ''}> Sex</span>
+        <span><input type="checkbox" class="dia-sab" ${dias_presenciais.sab ? 'checked' : ''}> Sab</span>
+      </td>
+      <td><input type="number" class="total" value="${pessoas}" readonly></td>
+    `;
+    tbody.appendChild(novaLinha);
+    adicionarEventosInput(novaLinha);
+  }
+
+  function adicionarEventosInput(row) {
+    row.querySelectorAll("input").forEach(input => {
+      input.addEventListener("input", () => calcularPessoasNaLinha(row));
+      input.addEventListener("change", () => calcularPessoasNaLinha(row));
+    });
+  }
+
+  function calcularPessoasNaLinha(linha) {
+    const cianorte = parseInt(linha.querySelector(".cianorte")?.value || 0);
+    const maringa = parseInt(linha.querySelector(".maringa")?.value || 0);
+    const home = parseInt(linha.querySelector("input:nth-child(6)")?.value || 0);
+    const full = parseInt(linha.querySelector("input:nth-child(7)")?.value || 0);
+    const totalField = linha.querySelector(".total");
+    totalField.value = cianorte + maringa + home + full;
+    atualizarTotais();
+  }
+
+  function salvarFirebase() {
+    const ano = document.getElementById("ano").value;
+    const mes = document.getElementById("mes").value;
+    const linhas = [];
+
+    document.querySelectorAll("#resumo-body tr").forEach(row => {
+      const area = row.children[0].children[0].value;
+      const operacao = row.children[1].children[0].value;
+      const x_semana = row.children[2].children[0].value;
+      const cianorte = row.children[3].children[0].value;
+      const maringa = row.children[4].children[0].value;
+      const home = row.children[5].children[0].value;
+      const full = row.children[6].children[0].value;
+      const pessoas = row.children[8].children[0].value;
+
+      const diasPresenciais = {
+        dom: row.querySelector(".dia-dom")?.checked,
+        seg: row.querySelector(".dia-seg")?.checked,
+        ter: row.querySelector(".dia-ter")?.checked,
+        qua: row.querySelector(".dia-qua")?.checked,
+        qui: row.querySelector(".dia-qui")?.checked,
+        sex: row.querySelector(".dia-sex")?.checked,
+        sab: row.querySelector(".dia-sab")?.checked
+      };
+
+      linhas.push({ area, operacao, x_semana, cianorte, maringa, home, full, pessoas, dias_presenciais });
+    });
+
+    db.ref(`escalas/${ano}/${mes}`).set({ linhas }).then(() => {
+      document.getElementById("mensagem-sucesso").textContent = "✅ Dados salvos no Firebase!";
+      setTimeout(() => document.getElementById("mensagem-sucesso").textContent = "", 3000);
+    }).catch(err => {
+      console.error("Erro ao salvar:", err);
+      document.getElementById("mensagem-sucesso").textContent = "❌ Erro ao salvar dados.";
+    });
+  }
+
+  function carregarDadosFirebase() {
+    const ano = document.getElementById("ano").value;
+    const mes = document.getElementById("mes").value;
+
+    db.ref(`escalas/${ano}/${mes}/linhas`).on("value", snapshot => {
+      const tbody = document.getElementById("resumo-body");
+      tbody.innerHTML = "";
+
+      if (snapshot.exists()) {
+        snapshot.val().forEach(dados => {
+          adicionarLinha(
+            dados.area,
+            dados.operacao,
+            dados.x_semana,
+            dados.cianorte,
+            dados.maringa,
+            dados.home,
+            dados.full,
+            dados.pessoas,
+            dados.dias_presenciais || {}
+          );
+        });
+      } else {
+        adicionarLinha("Squad Dados/Fin", "P&D", "0", "0", "0", "0", "0", "0", { ter: true, qua: true });
+      }
+
+      gerarCalendario(parseInt(document.getElementById("ano").value), parseInt(document.getElementById("mes").value));
+      atualizarTotais();
+    });
+  }
+
+  document.getElementById("ano").addEventListener("change", () => {
+    gerarCalendario(parseInt(document.getElementById("ano").value), parseInt(document.getElementById("mes").value));
+    carregarDadosFirebase();
+  });
+
+  document.getElementById("mes").addEventListener("change", () => {
+    gerarCalendario(parseInt(document.getElementById("ano").value), parseInt(document.getElementById("mes").value));
+    carregarDadosFirebase();
+  });
+
+  document.getElementById("adicionar-linha").addEventListener("click", () => {
+    adicionarLinha("", "", 0, 0, 0, 0, 0, 0, {});
+  });
+
+  document.getElementById("salvar-dados").addEventListener("click", salvarFirebase);
+
+  // Inicialização
+  const hoje = new Date();
+  document.getElementById("ano").value = hoje.getFullYear();
+  document.getElementById("mes").value = hoje.getMonth();
+
+  gerarCalendario(hoje.getFullYear(), hoje.getMonth());
+  carregarDadosFirebase();
+</script>
+</body>
+</html>
