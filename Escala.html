@@ -1,0 +1,1151 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Ocupação - Escritório e Fretado</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            padding: 30px;
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .tab {
+            padding: 15px 30px;
+            cursor: pointer;
+            background: #f8f9fa;
+            border: none;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border-radius: 10px 10px 0 0;
+            margin-right: 5px;
+        }
+
+        .tab.active {
+            background: #3498db;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .tab:hover {
+            background: #2980b9;
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .form-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            border-left: 5px solid #3498db;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #2c3e50;
+        }
+
+        .form-group input,
+        .form-group select {
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            accent-color: #3498db;
+        }
+
+        .days-selection {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .day-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 8px 12px;
+            background: #e9ecef;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .day-checkbox:hover {
+            background: #3498db;
+            color: white;
+        }
+
+        .day-checkbox input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(46, 204, 113, 0.3);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(231, 76, 60, 0.3);
+        }
+
+        .employees-list {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .employee-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 4px solid #3498db;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: transform 0.3s ease;
+        }
+
+        .employee-card:hover {
+            transform: translateX(5px);
+        }
+
+        .employee-info {
+            flex: 1;
+        }
+
+        .employee-name {
+            font-weight: 600;
+            font-size: 1.1em;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .employee-details {
+            color: #7f8c8d;
+            font-size: 0.9em;
+        }
+
+        .employee-days {
+            display: flex;
+            gap: 5px;
+            margin-top: 5px;
+        }
+
+        .day-badge {
+            background: #3498db;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+        }
+
+        .calendar-container {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .month-nav {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .nav-btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s ease;
+        }
+
+        .nav-btn:hover {
+            background: #2980b9;
+        }
+
+        .current-month {
+            font-size: 1.5em;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 1px;
+            background: #ddd;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .calendar-day {
+            background: white;
+            min-height: 120px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .calendar-day-header {
+            font-weight: 600;
+            color: #2c3e50;
+            text-align: center;
+            background: #ecf0f1;
+            padding: 10px;
+            margin: -10px -10px 10px -10px;
+        }
+
+        .calendar-day-number {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .calendar-day.other-month {
+            background: #f8f9fa;
+            color: #bdc3c7;
+        }
+
+        .calendar-day.today {
+            background: #e3f2fd;
+            border: 2px solid #3498db;
+        }
+
+        .occupancy-info {
+            font-size: 0.8em;
+            color: #7f8c8d;
+        }
+
+        .occupancy-bar {
+            height: 4px;
+            background: #ecf0f1;
+            border-radius: 2px;
+            margin-top: 5px;
+            overflow: hidden;
+        }
+
+        .occupancy-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #2ecc71, #27ae60);
+            transition: width 0.3s ease;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .export-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            border: 2px dashed #3498db;
+        }
+
+        .export-section h3 {
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+
+        .area-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .area-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border-left: 4px solid #3498db;
+        }
+
+        .area-title {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+
+        .area-stats {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .area-stat {
+            text-align: center;
+        }
+
+        .area-stat-number {
+            font-size: 1.5em;
+            font-weight: 600;
+            color: #3498db;
+        }
+
+        .area-stat-label {
+            font-size: 0.9em;
+            color: #7f8c8d;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #7f8c8d;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border-color: #28a745;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border-color: #dc3545;
+        }
+
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .days-selection {
+                justify-content: center;
+            }
+            
+            .calendar-day {
+                min-height: 80px;
+            }
+            
+            .employee-card {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏢 Simulador de Ocupação</h1>
+            <p>Escritório e Fretado - Gestão Inteligente de Presença</p>
+        </div>
+
+        <div class="main-content">
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('cadastro')">📝 Cadastro</button>
+                <button class="tab" onclick="switchTab('calendario')">📅 Calendário</button>
+                <button class="tab" onclick="switchTab('relatorios')">📊 Relatórios</button>
+                <button class="tab" onclick="switchTab('exportar')">💾 Exportar</button>
+            </div>
+
+            <div id="cadastro" class="tab-content active">
+                <div class="form-section">
+                    <h2>Cadastro de Funcionários</h2>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="nome">Nome da Pessoa</label>
+                            <input type="text" id="nome" placeholder="Digite o nome completo">
+                        </div>
+                        <div class="form-group">
+                            <label for="area">Área</label>
+                            <select id="area">
+                                <option value="">Selecione a área</option>
+                                <option value="Tecnologia">Tecnologia</option>
+                                <option value="Marketing">Marketing</option>
+                                <option value="Vendas">Vendas</option>
+                                <option value="Recursos Humanos">Recursos Humanos</option>
+                                <option value="Financeiro">Financeiro</option>
+                                <option value="Operações">Operações</option>
+                                <option value="Atendimento">Atendimento</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="operacao">Operação</label>
+                            <input type="text" id="operacao" placeholder="Ex: Desenvolvimento, Suporte, etc.">
+                        </div>
+                        <div class="form-group">
+                            <label for="frequencia">Frequência Semanal</label>
+                            <select id="frequencia">
+                                <option value="1">1 vez por semana</option>
+                                <option value="2">2 vezes por semana</option>
+                                <option value="3">3 vezes por semana</option>
+                                <option value="4">4 vezes por semana</option>
+                                <option value="5">5 vezes por semana</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="fretado">
+                        <label for="fretado">🚌 Utiliza fretado</label>
+                    </div>
+
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="homeOffice">
+                        <label for="homeOffice">🏠 Trabalha Full Home Office</label>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Dias da Semana - Presencial</label>
+                        <div class="days-selection">
+                            <div class="day-checkbox">
+                                <input type="checkbox" id="domingo" value="0">
+                                <label for="domingo">Dom</label>
+                            </div>
+                            <div class="day-checkbox">
+                                <input type="checkbox" id="segunda" value="1">
+                                <label for="segunda">Seg</label>
+                            </div>
+                            <div class="day-checkbox">
+                                <input type="checkbox" id="terca" value="2">
+                                <label for="terca">Ter</label>
+                            </div>
+                            <div class="day-checkbox">
+                                <input type="checkbox" id="quarta" value="3">
+                                <label for="quarta">Qua</label>
+                            </div>
+                            <div class="day-checkbox">
+                                <input type="checkbox" id="quinta" value="4">
+                                <label for="quinta">Qui</label>
+                            </div>
+                            <div class="day-checkbox">
+                                <input type="checkbox" id="sexta" value="5">
+                                <label for="sexta">Sex</label>
+                            </div>
+                            <div class="day-checkbox">
+                                <input type="checkbox" id="sabado" value="6">
+                                <label for="sabado">Sab</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="text-align: center; margin-top: 20px;">
+                        <button class="btn btn-primary" onclick="adicionarFuncionario()">
+                            ➕ Adicionar Funcionário
+                        </button>
+                        <button class="btn btn-success" onclick="editarFuncionario()" id="editBtn" style="display: none;">
+                            ✏️ Salvar Edição
+                        </button>
+                        <button class="btn btn-danger" onclick="cancelarEdicao()" id="cancelBtn" style="display: none;">
+                            ❌ Cancelar
+                        </button>
+                    </div>
+                </div>
+
+                <div class="employees-list" id="employeesList">
+                    <h3>Funcionários Cadastrados</h3>
+                    <div id="employeesContainer"></div>
+                </div>
+            </div>
+
+            <div id="calendario" class="tab-content">
+                <div class="calendar-container">
+                    <div class="calendar-header">
+                        <div class="month-nav">
+                            <button class="nav-btn" onclick="navegarMes(-1)">‹</button>
+                            <div class="current-month" id="currentMonth"></div>
+                            <button class="nav-btn" onclick="navegarMes(1)">›</button>
+                        </div>
+                        <div>
+                            <button class="btn btn-primary" onclick="atualizarCalendario()">🔄 Atualizar</button>
+                        </div>
+                    </div>
+                    <div class="calendar-grid" id="calendarGrid"></div>
+                </div>
+            </div>
+
+            <div id="relatorios" class="tab-content">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalFuncionarios">0</div>
+                        <div class="stat-label">Total de Funcionários</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalFretado">0</div>
+                        <div class="stat-label">Usuários do Fretado</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalHomeOffice">0</div>
+                        <div class="stat-label">Full Home Office</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalAreas">0</div>
+                        <div class="stat-label">Áreas Cadastradas</div>
+                    </div>
+                </div>
+
+                <div class="area-summary" id="areaSummary"></div>
+            </div>
+
+            <div id="exportar" class="tab-content">
+                <div class="export-section">
+                    <h3>📊 Sincronização de Dados com Google Sheets</h3>
+                    <p>Os dados serão salvos/carregados na planilha Google Sheets configurada no Apps Script.</p>
+                    <div style="margin-top: 20px;">
+                        <button class="btn btn-success" onclick="salvarNoGoogleSheets()" id="saveBtn">
+                            💾 Salvar na Planilha
+                        </button>
+                        <button class="btn btn-primary" onclick="carregarDoGoogleSheets()" id="loadBtn">
+                            📥 Carregar da Planilha
+                        </button>
+                        <button class="btn btn-primary" onclick="exportarCSV()">
+                            📄 Download CSV
+                        </button>
+                    </div>
+                    <div id="syncStatus" style="margin-top: 15px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let funcionarios = [];
+        let editandoIndex = -1;
+        let mesAtual = new Date().getMonth();
+        let anoAtual = new Date().getFullYear();
+
+        // ** SUBSTITUA PELA URL DO SEU GOOGLE APPS SCRIPT WEB APP **
+        // Esta URL deve ser a URL COMPLETA obtida da sua implantação do Apps Script.
+        // Ex: 'https://script.google.com/macros/s/AKfycbz_XXXXXXXXXXXX_YYYYYYYYYYYY/exec'
+        const APPS_SCRIPT_WEB_APP_URL = 'https://script.google.com/a/macros/totvs.com.br/s/AKfycbyQeVQt8XS2aYuShNBDGNs0L8mI8_Q6sp4ItY5VtnC4VP1vaCkGzldJ3uQxi7yxKOqzlQ/exec'; 
+        
+        const SHEET_NAME = 'Funcionarios'; // Nome da aba na planilha
+
+        const diasSemana = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'];
+        const meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+                       'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Tenta carregar dados ao iniciar, pois a planilha é fixa agora.
+            carregarDoGoogleSheets(); 
+            atualizarListaFuncionarios();
+            atualizarCalendario();
+            atualizarRelatorios();
+        });
+
+        // Funções de configuração de planilha (configurarPlanilha, criarNovaPlanilha) foram removidas.
+
+        async function salvarNoGoogleSheets() {
+            if (APPS_SCRIPT_WEB_APP_URL === 'YOUR_APPS_SCRIPT_WEB_APP_URL') {
+                alert('Erro: A URL do Apps Script Web App não foi configurada. Por favor, edite o código HTML.');
+                return;
+            }
+
+            if (funcionarios.length === 0) {
+                alert('Não há dados para salvar na planilha.');
+                return;
+            }
+            
+            try {
+                mostrarStatus('syncStatus', 'Salvando dados na planilha...', 'info');
+                const valores = [
+                    ['Nome', 'Área', 'Operação', 'Frequência', 'Fretado', 'Home Office', 'Dias Presenciais']
+                ];
+                funcionarios.forEach(funcionario => {
+                    const diasTexto = funcionario.diasPresenciais.map(dia => diasSemana[dia]).join(', ');
+                    valores.push([
+                        funcionario.nome,
+                        funcionario.area,
+                        funcionario.operacao,
+                        funcionario.frequencia.toString(),
+                        funcionario.fretado ? 'Sim' : 'Não',
+                        funcionario.homeOffice ? 'Sim' : 'Não',
+                        diasTexto
+                    ]);
+                });
+
+                const response = await fetch(APPS_SCRIPT_WEB_APP_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        action: 'clearAndSave',
+                        sheetName: SHEET_NAME, // A planilha ID é fixa no Apps Script
+                        data: valores
+                    })
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    mostrarStatus('syncStatus', 'Dados salvos com sucesso! ✅', 'success');
+                } else {
+                    mostrarStatus('syncStatus', `Erro ao salvar: ${result.message} ❌`, 'error');
+                }
+            } catch (error) {
+                console.error('Erro ao salvar:', error);
+                mostrarStatus('syncStatus', 'Erro ao salvar dados. Verifique a URL do Apps Script e a conexão de rede. ❌', 'error');
+            }
+        }
+
+        async function carregarDoGoogleSheets() {
+            if (APPS_SCRIPT_WEB_APP_URL === 'YOUR_APPS_SCRIPT_WEB_APP_URL') {
+                mostrarStatus('syncStatus', 'A URL do Apps Script Web App não foi configurada. Não é possível carregar dados.', 'error');
+                return;
+            }
+            
+            try {
+                mostrarStatus('syncStatus', 'Carregando dados da planilha...', 'info');
+                // Não precisa passar spreadsheetId aqui, pois ele é fixo no Apps Script
+                const response = await fetch(`${APPS_SCRIPT_WEB_APP_URL}?action=load&sheetName=${SHEET_NAME}`);
+                const result = await response.json();
+
+                if (result.success) {
+                    const values = result.data;
+                    if (!values || values.length <= 1) { // Considera a primeira linha como cabeçalho
+                        mostrarStatus('syncStatus', 'Nenhum dado de funcionário encontrado na planilha.', 'info');
+                        funcionarios = [];
+                        atualizarListaFuncionarios();
+                        atualizarCalendario();
+                        atualizarRelatorios();
+                        return;
+                    }
+                    
+                    funcionarios = [];
+                    // Começa do índice 1 para pular o cabeçalho
+                    for (let i = 1; i < values.length; i++) {
+                        const row = values[i];
+                        // Garante que a linha tem dados suficientes e o primeiro campo não é vazio
+                        if (row.length >= 7 && row[0]) { 
+                            const diasTexto = row[6] || '';
+                            const diasPresenciais = [];
+                            
+                            diasSemana.forEach((dia, index) => {
+                                if (diasTexto.includes(dia)) {
+                                    diasPresenciais.push(index);
+                                }
+                            });
+                            const funcionario = {
+                                nome: row[0] || '',
+                                area: row[1] || '',
+                                operacao: row[2] || '',
+                                frequencia: parseInt(row[3]) || 1,
+                                fretado: row[4] === 'Sim',
+                                homeOffice: row[5] === 'Sim',
+                                diasPresenciais: diasPresenciais
+                            };
+                            funcionarios.push(funcionario);
+                        }
+                    }
+                    atualizarListaFuncionarios();
+                    atualizarCalendario();
+                    atualizarRelatorios();
+                    mostrarStatus('syncStatus', `${funcionarios.length} funcionários carregados! ✅`, 'success');
+                } else {
+                    mostrarStatus('syncStatus', `Erro ao carregar: ${result.message} ❌`, 'error');
+                }
+            } catch (error) {
+                console.error('Erro ao carregar:', error);
+                mostrarStatus('syncStatus', 'Erro ao carregar dados. Verifique a URL do Apps Script e a conexão de rede. ❌', 'error');
+            }
+        }
+
+        function mostrarStatus(elementId, mensagem, tipo) {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<div class="alert alert-${tipo === 'error' ? 'error' : 'success'}">${mensagem}</div>`;
+            setTimeout(() => { element.innerHTML = ''; }, 5000);
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.querySelector(`[onclick="switchTab('${tabName}')"]`).classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+            if (tabName === 'calendario') {
+                atualizarCalendario();
+            } else if (tabName === 'relatorios') {
+                atualizarRelatorios();
+            }
+        }
+
+        function adicionarFuncionario() {
+            const nome = document.getElementById('nome').value;
+            const area = document.getElementById('area').value;
+            const operacao = document.getElementById('operacao').value;
+            const frequencia = document.getElementById('frequencia').value;
+            const fretado = document.getElementById('fretado').checked;
+            const homeOffice = document.getElementById('homeOffice').checked;
+
+            if (!nome || !area) {
+                alert('Por favor, preencha pelo menos o nome e a área.');
+                return;
+            }
+
+            const diasSelecionados = [];
+            const checkboxes = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'];
+            checkboxes.forEach(dia => {
+                if (document.getElementById(dia).checked) {
+                    diasSelecionados.push(parseInt(document.getElementById(dia).value));
+                }
+            });
+
+            const funcionario = { nome, area, operacao, frequencia: parseInt(frequencia), fretado, homeOffice, diasPresenciais: diasSelecionados };
+            funcionarios.push(funcionario);
+            limparFormulario();
+            atualizarListaFuncionarios();
+            mostrarStatus('syncStatus', 'Funcionário adicionado com sucesso! ✅', 'success');
+            salvarNoGoogleSheets(); // Salva automaticamente após adicionar
+        }
+
+        function editarFuncionario() {
+            if (editandoIndex === -1) return;
+
+            const nome = document.getElementById('nome').value;
+            const area = document.getElementById('area').value;
+            const operacao = document.getElementById('operacao').value;
+            const frequencia = document.getElementById('frequencia').value;
+            const fretado = document.getElementById('fretado').checked;
+            const homeOffice = document.getElementById('homeOffice').checked;
+
+            if (!nome || !area) {
+                alert('Por favor, preencha pelo menos o nome e a área.');
+                return;
+            }
+
+            const diasSelecionados = [];
+            const checkboxes = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'];
+            checkboxes.forEach(dia => {
+                if (document.getElementById(dia).checked) {
+                    diasSelecionados.push(parseInt(document.getElementById(dia).value));
+                }
+            });
+
+            funcionarios[editandoIndex] = { nome, area, operacao, frequencia: parseInt(frequencia), fretado, homeOffice, diasPresenciais: diasSelecionados };
+            cancelarEdicao();
+            atualizarListaFuncionarios();
+            mostrarStatus('syncStatus', 'Funcionário editado com sucesso! ✅', 'success');
+            salvarNoGoogleSheets(); // Salva automaticamente após editar
+        }
+
+        function cancelarEdicao() {
+            editandoIndex = -1;
+            limparFormulario();
+            document.getElementById('editBtn').style.display = 'none';
+            document.getElementById('cancelBtn').style.display = 'none';
+        }
+
+        function iniciarEdicao(index) {
+            editandoIndex = index;
+            const funcionario = funcionarios[index];
+            document.getElementById('nome').value = funcionario.nome;
+            document.getElementById('area').value = funcionario.area;
+            document.getElementById('operacao').value = funcionario.operacao;
+            document.getElementById('frequencia').value = funcionario.frequencia;
+            document.getElementById('fretado').checked = funcionario.fretado;
+            document.getElementById('homeOffice').checked = funcionario.homeOffice;
+
+            const checkboxes = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'];
+            checkboxes.forEach(dia => {
+                document.getElementById(dia).checked = false;
+            });
+            funcionario.diasPresenciais.forEach(dia => {
+                const checkbox = checkboxes.find(cb => parseInt(document.getElementById(cb).value) === dia);
+                if (checkbox) {
+                    document.getElementById(checkbox).checked = true;
+                }
+            });
+            document.getElementById('editBtn').style.display = 'inline-block';
+            document.getElementById('cancelBtn').style.display = 'inline-block';
+        }
+
+        function removerFuncionario(index) {
+            if (confirm('Tem certeza que deseja remover este funcionário?')) {
+                funcionarios.splice(index, 1);
+                atualizarListaFuncionarios();
+                mostrarStatus('syncStatus', 'Funcionário removido com sucesso! ✅', 'success');
+                salvarNoGoogleSheets(); // Salva automaticamente após remover
+            }
+        }
+
+        function limparFormulario() {
+            document.getElementById('nome').value = '';
+            document.getElementById('area').value = '';
+            document.getElementById('operacao').value = '';
+            document.getElementById('frequencia').value = '1';
+            document.getElementById('fretado').checked = false;
+            document.getElementById('homeOffice').checked = false;
+            const checkboxes = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'];
+            checkboxes.forEach(dia => {
+                document.getElementById(dia).checked = false;
+            });
+        }
+
+        function atualizarListaFuncionarios() {
+            const container = document.getElementById('employeesContainer');
+            container.innerHTML = '';
+            funcionarios.forEach((funcionario, index) => {
+                const diasBadges = funcionario.diasPresenciais.map(dia => `<span class="day-badge">${diasSemana[dia]}</span>` ).join('');
+                const card = document.createElement('div');
+                card.className = 'employee-card';
+                card.innerHTML = `
+                    <div class="employee-info">
+                        <div class="employee-name">${funcionario.nome}</div>
+                        <div class="employee-details">
+                            ${funcionario.area} - ${funcionario.operacao} | Frequência: ${funcionario.frequencia}x/semana
+                            ${funcionario.fretado ? ' | 🚌 Fretado' : ''}
+                            ${funcionario.homeOffice ? ' | 🏠 Home Office' : ''}
+                        </div>
+                        <div class="employee-days">${diasBadges}</div>
+                    </div>
+                    <div>
+                        <button class="btn btn-primary" onclick="iniciarEdicao(${index})" style="margin-right: 10px;">✏️</button>
+                        <button class="btn btn-danger" onclick="removerFuncionario(${index})">🗑️</button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function atualizarCalendario() {
+            const calendar = document.getElementById('calendarGrid');
+            const monthLabel = document.getElementById('currentMonth');
+            monthLabel.textContent = `${meses[mesAtual]} ${anoAtual}`;
+
+            calendar.innerHTML = '';
+            diasSemana.forEach(dia => {
+                const dayHeader = document.createElement('div');
+                dayHeader.className = 'calendar-day-header';
+                dayHeader.textContent = dia;
+                calendar.appendChild(dayHeader);
+            });
+
+            const firstDay = new Date(anoAtual, mesAtual, 1);
+            const lastDay = new Date(anoAtual, mesAtual + 1, 0);
+            const daysInMonth = lastDay.getDate();
+            const startingDayOfWeek = firstDay.getDay();
+
+            const prevMonth = new Date(anoAtual, mesAtual - 1, 0);
+            const daysInPrevMonth = prevMonth.getDate();
+
+            for (let i = startingDayOfWeek - 1; i >= 0; i--) {
+                const dayElement = document.createElement('div');
+                dayElement.className = 'calendar-day other-month';
+                dayElement.innerHTML = `
+                    <div class="calendar-day-number">${daysInPrevMonth - i}</div>
+                `;
+                calendar.appendChild(dayElement);
+            }
+
+            const today = new Date();
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dayElement = document.createElement('div');
+                dayElement.className = 'calendar-day';
+                const currentDate = new Date(anoAtual, mesAtual, day);
+                const dayOfWeek = currentDate.getDay();
+
+                if (today.getDate() === day && today.getMonth() === mesAtual && today.getFullYear() === anoAtual) {
+                    dayElement.classList.add('today');
+                }
+
+                const ocupacao = calcularOcupacaoDay(dayOfWeek);
+                const ocupacaoFretado = calcularOcupacaoFretado(dayOfWeek);
+
+                dayElement.innerHTML = `
+                    <div class="calendar-day-number">${day}</div>
+                    <div class="occupancy-info">
+                        <div>Escritório: ${ocupacao.total}</div>
+                        <div class="occupancy-bar">
+                            <div class="occupancy-fill" style="width: ${(ocupacao.total / Math.max(funcionarios.length, 1)) * 100}%"></div>
+                        </div>
+                        <div>Fretado: ${ocupacaoFretado}</div>
+                    </div>
+                `;
+                calendar.appendChild(dayElement);
+            }
+
+            const remainingCells = 42 - (startingDayOfWeek + daysInMonth);
+            for (let day = 1; day <= remainingCells; day++) {
+                const dayElement = document.createElement('div');
+                dayElement.className = 'calendar-day other-month';
+                dayElement.innerHTML = `
+                    <div class="calendar-day-number">${day}</div>
+                `;
+                calendar.appendChild(dayElement);
+            }
+        }
+
+        function calcularOcupacaoDay(dayOfWeek) {
+            let total = 0;
+            let porArea = {};
+            funcionarios.forEach(funcionario => {
+                if (!funcionario.homeOffice && funcionario.diasPresenciais.includes(dayOfWeek)) {
+                    total++;
+                    porArea[funcionario.area] = (porArea[funcionario.area] || 0) + 1;
+                }
+            });
+            return { total, porArea };
+        }
+
+        function calcularOcupacaoFretado(dayOfWeek) {
+            return funcionarios.filter(funcionario => !funcionario.homeOffice && funcionario.fretado && funcionario.diasPresenciais.includes(dayOfWeek) ).length;
+        }
+
+        function navegarMes(direction) {
+            mesAtual += direction;
+            if (mesAtual > 11) {
+                mesAtual = 0;
+                anoAtual++;
+            } else if (mesAtual < 0) {
+                mesAtual = 11;
+                anoAtual--;
+            }
+            atualizarCalendario();
+        }
+
+        function atualizarRelatorios() {
+            document.getElementById('totalFuncionarios').textContent = funcionarios.length;
+            document.getElementById('totalFretado').textContent = funcionarios.filter(f => f.fretado).length;
+            document.getElementById('totalHomeOffice').textContent = funcionarios.filter(f => f.homeOffice).length;
+
+            const areas = [...new Set(funcionarios.map(f => f.area))];
+            document.getElementById('totalAreas').textContent = areas.length;
+
+            const areaSummary = document.getElementById('areaSummary');
+            areaSummary.innerHTML = '';
+            areas.forEach(area => {
+                const funcionariosArea = funcionarios.filter(f => f.area === area);
+                const totalArea = funcionariosArea.length;
+                const fretadoArea = funcionariosArea.filter(f => f.fretado).length;
+                const homeOfficeArea = funcionariosArea.filter(f => f.homeOffice).length;
+                const diasPresenciaisMedio = funcionariosArea.reduce((acc, f) => acc + f.diasPresenciais.length, 0) / totalArea || 0;
+
+                const card = document.createElement('div');
+                card.className = 'area-card';
+                card.innerHTML = `
+                    <div class="area-title">${area}</div>
+                    <div class="area-stats">
+                        <div class="area-stat">
+                            <div class="area-stat-number">${totalArea}</div>
+                            <div class="area-stat-label">Funcionários</div>
+                        </div>
+                        <div class="area-stat">
+                            <div class="area-stat-number">${fretadoArea}</div>
+                            <div class="area-stat-label">Fretado</div>
+                        </div>
+                        <div class="area-stat">
+                            <div class="area-stat-number">${homeOfficeArea}</div>
+                            <div class="area-stat-label">Home Office</div>
+                        </div>
+                        <div class="area-stat">
+                            <div class="area-stat-number">${diasPresenciaisMedio.toFixed(1)}</div>
+                            <div class="area-stat-label">Dias/Semana</div>
+                        </div>
+                    </div>
+                `;
+                areaSummary.appendChild(card);
+            });
+        }
+
+        function exportarCSV() {
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += "Nome,Área,Operação,Frequência,Fretado,Home Office,Dias Presenciais\n";
+
+            funcionarios.forEach(func => {
+                const diasTexto = func.diasPresenciais.map(dia => diasSemana[dia]).join(', ');
+                const row = [
+                    `"${func.nome}"`,
+                    `"${func.area}"`,
+                    `"${func.operacao}"`,
+                    func.frequencia,
+                    func.fretado ? 'Sim' : 'Não',
+                    func.homeOffice ? 'Sim' : 'Não',
+                    `"${diasTexto}"`
+                ].join(',');
+                csvContent += row + "\n";
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "simulador_ocupacao.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+</body>
+</html>
